@@ -11,6 +11,9 @@ Options:
 
 The environment file should contain KEY=VALUE lines.
 Optional build variable: DOCKER_PLATFORM (default: linux/amd64).
+Optional: SSM_LAST_IMAGE_PARAM (default: /my-second-cdk-ecs-service/image-tag), an SSM parameter updated with the image tag only
+after the ECS deployment completes (including bake time).
+Optional: DEPLOY_TIMEOUT_SECONDS (default: 1800) to wait for the deployment.
 
 If --env-file is not provided, the script will auto-load the first file found:
   1. .env.deploy.local
@@ -124,6 +127,7 @@ main() {
     discover_default_env_file
   fi
   load_env_file "$DEPLOY_ENV_FILE"
+  SSM_LAST_IMAGE_PARAM="${SSM_LAST_IMAGE_PARAM:-/my-second-cdk-ecs-service/image-tag}"
 
   require_cmd aws
   require_cmd docker
@@ -249,7 +253,42 @@ main() {
     --task-definition "$new_td_arn" \
     --force-new-deployment >/dev/null
 
-  echo "Deployment started successfully."
+  echo "Waiting for deployment of ${new_td_arn} to complete..."
+  local deadline dep state
+  deadline=$((SECONDS + ${DEPLOY_TIMEOUT_SECONDS:-1800}))
+  while :; do
+    dep="$(aws ecs describe-services \
+      --region "$AWS_REGION" \
+      --cluster "$ECS_CLUSTER" \
+      --services "$ECS_SERVICE" \
+      --query "services[0].deployments[?taskDefinition=='${new_td_arn}'] | [0]" \
+      --output json)"
+    state="$(printf '%s' "$dep" | jq -r '.rolloutState // "MISSING"')"
+    case "$state" in
+      COMPLETED) break ;;
+      FAILED|MISSING)
+        echo "Deployment failed (${state}); not updating SSM." >&2
+        exit 1
+        ;;
+    esac
+    if (( SECONDS >= deadline )); then
+      echo "Timed out waiting for deployment to complete; not updating SSM." >&2
+      exit 1
+    fi
+    sleep 15
+  done
+
+  if [[ -n "${SSM_LAST_IMAGE_PARAM:-}" ]]; then
+    echo "Updating SSM parameter ${SSM_LAST_IMAGE_PARAM}..."
+    aws ssm put-parameter \
+      --region "$AWS_REGION" \
+      --name "$SSM_LAST_IMAGE_PARAM" \
+      --type String \
+      --overwrite \
+      --value "$image_tag" >/dev/null
+  fi
+
+  echo "Deployment completed successfully."
   echo "Image: ${remote_image}"
   echo "Task definition: ${new_td_arn}"
 }
