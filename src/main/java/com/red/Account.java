@@ -1,8 +1,18 @@
 package com.red;
 
-import java.math.BigDecimal;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import java.math.BigDecimal;
+import java.util.List;
+
+@ApplicationScoped
 public class Account {
+
+    @Inject
+    @RestClient
+    TranxClient tranxClient;
 
     private String id;
     private String name;
@@ -50,5 +60,8 @@ public class Account {
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
     }
-}
 
+    public List<Tranx> getTransactions(String id) {
+        return tranxClient.getTransactions(id);
+    }
+}

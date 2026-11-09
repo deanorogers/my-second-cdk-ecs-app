@@ -21,10 +21,10 @@ public class AccountService {
     @PostConstruct
     void init() {
         accounts.put("1001", new Account("1001", "Bootstrap Checking", "USD", new BigDecimal("1532.44")));
-        accounts.put("2001", new Account("2001", "Bootstrap Savings", "USD", new BigDecimal("8099.12")));
-        accounts.put("3001", new Account("3001", "Latest 6 Fund", "USD", new BigDecimal("12500.01")));
+        accounts.put("2001", new Account("2001", "Savings", "USD", new BigDecimal("8099.12")));
+        accounts.put("3001", new Account("3001", "Bake failure" +
+                " II", "USD", new BigDecimal("12500.01")));
     }
-
     public List<Account> list() {
         return accounts.values().stream()
                 .sorted(Comparator.comparing(Account::getId))

@@ -20,7 +20,7 @@ class AccountResourceTest {
         given()
           .when().get("/")
           .then()
-             .statusCode(503)
+             .statusCode(200)
              .body(is("quarkus accounts service is running\n"));
     }
 

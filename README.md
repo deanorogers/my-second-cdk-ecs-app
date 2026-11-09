@@ -15,6 +15,10 @@ The service starts with these hard-coded accounts:
 - `2001` / `Savings`
 - `3001` / `Emergency Fund`
 
+Set `TRANSACTIONS_BASE_URL` to the transactions service base URL, including its
+scheme and port if needed. It defaults to `http://localhost:8081`; omit a
+trailing slash.
+
 ## Run locally in dev mode
 
 ```bash
@@ -112,5 +116,4 @@ Notes:
 
 - `.env.deploy.local` is ignored by `.gitignore`
 - `.env.deploy.example` is safe to commit as a template
-
 

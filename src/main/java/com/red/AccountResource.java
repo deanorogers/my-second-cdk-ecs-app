@@ -23,6 +23,9 @@ public class AccountResource {
     @Inject
     AccountService accountService;
 
+    @Inject
+    Account transactionLookup;
+
     @GET
     public List<Account> listAccounts() {
         return accountService.list();
@@ -36,6 +39,14 @@ public class AccountResource {
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(Map.of("error", "Account not found"))
                         .build());
+    }
+
+    @GET
+    @Path("/{id}/transactions")
+    public List<Tranx> getTransactions(@PathParam("id") String id) {
+        return accountService.findById(id)
+                .map(account -> transactionLookup.getTransactions(account.getId()))
+                .orElseGet(List::of);
     }
 
     @POST
@@ -55,4 +66,3 @@ public class AccountResource {
         }
     }
 }
-
