@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @QuarkusTest
 @QuarkusTestResource(value = TransactionServer.class, restrictToAnnotatedClass = true)
@@ -30,5 +31,23 @@ class AccountTransactionsTest {
           .then()
              .statusCode(200)
              .body("$", empty());
+    }
+
+    @Test
+    void accountsDoNotExposeInstanceName() {
+        given()
+          .when().get("/accounts")
+          .then()
+             .statusCode(200)
+             .body("[0].instanceName", nullValue());
+    }
+
+    @Test
+    void returnsInstanceNameFromTransactionsService() {
+        given()
+          .when().get("/accounts/instance-name")
+          .then()
+             .statusCode(200)
+             .body(is("Serving Transaction from instance: test"));
     }
 }

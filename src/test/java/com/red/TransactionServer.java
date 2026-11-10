@@ -28,8 +28,16 @@ public class TransactionServer implements QuarkusTestResourceLifecycleManager {
                     body.write(response);
                 }
             });
+            server.createContext("/transactions/instance-name", exchange -> {
+                byte[] response = "Serving Transaction from instance: test".getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "text/plain");
+                exchange.sendResponseHeaders(200, response.length);
+                try (var body = exchange.getResponseBody()) {
+                    body.write(response);
+                }
+            });
             server.start();
-            return Map.of("quarkus.rest-client.transaction-data-api.url",
+            return Map.of("transactions.base-url",
                     "http://127.0.0.1:" + server.getAddress().getPort());
         } catch (IOException exception) {
             throw new UncheckedIOException(exception);

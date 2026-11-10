@@ -2,6 +2,10 @@ package com.red;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -76,6 +80,11 @@ public class AccountService {
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
     }
+
+    public String getInstanceName() {
+        return "AccountService";
+    }
+
 }
 
 

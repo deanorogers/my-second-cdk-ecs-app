@@ -24,7 +24,7 @@ public class AccountResource {
     AccountService accountService;
 
     @Inject
-    Account transactionLookup;
+    TranxClient tranxClient;
 
     @GET
     public List<Account> listAccounts() {
@@ -45,7 +45,7 @@ public class AccountResource {
     @Path("/{id}/transactions")
     public List<Tranx> getTransactions(@PathParam("id") String id) {
         return accountService.findById(id)
-                .map(account -> transactionLookup.getTransactions(account.getId()))
+                .map(account -> tranxClient.getTransactions(account.getId()))
                 .orElseGet(List::of);
     }
 
@@ -64,5 +64,12 @@ public class AccountResource {
                     .entity(Map.of("error", exception.getMessage()))
                     .build();
         }
+    }
+
+    @GET
+    @Path("/instance-name")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getInstanceName() {
+        return tranxClient.getInstanceName();
     }
 }
