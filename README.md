@@ -19,7 +19,14 @@ Set `TRANSACTIONS_BASE_URL` to the transactions service base URL, including its
 scheme and port if needed. It defaults to `http://localhost:8081`; omit a
 trailing slash.
 
+`TranxEasyClient` uses Vert.x directly and returns asynchronous futures. Its
+connection pool has an absolute maximum connection lifetime configured by
+`transactions.connection-ttl-ms` (currently 120000 ms). Existing account
+endpoints continue to use `TranxClient`.
+
 ## Run locally in dev mode
+
+Quarkus 4.0.0.CR1 is a pre-release and requires Java 21.
 
 ```bash
 ./mvnw quarkus:dev
@@ -116,4 +123,3 @@ Notes:
 
 - `.env.deploy.local` is ignored by `.gitignore`
 - `.env.deploy.example` is safe to commit as a template
-

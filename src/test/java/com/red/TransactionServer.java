@@ -17,13 +17,25 @@ public class TransactionServer implements QuarkusTestResourceLifecycleManager {
         try {
             server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
             server.createContext("/transactions", exchange -> {
+                boolean ttlRequest = "accountId=ttl-test".equals(exchange.getRequestURI().getRawQuery());
                 boolean valid = "GET".equals(exchange.getRequestMethod())
                         && "/transactions".equals(exchange.getRequestURI().getPath())
-                        && "accountId=2001".equals(exchange.getRequestURI().getRawQuery());
-                byte[] response = (valid ? "[{\"id\":\"t-2001\",\"accountId\":\"2001\"}]" : "bad request")
+                        && ("accountId=2001".equals(exchange.getRequestURI().getRawQuery()) || ttlRequest);
+                String json = ttlRequest
+                        ? "[{\"id\":\"" + exchange.getRemoteAddress().getPort() + "\",\"accountId\":\"ttl-test\"}]"
+                        : "[{\"id\":\"t-2001\",\"accountId\":\"2001\",\"timestamp\":\"2026-10-01T09:00:00Z\"}]";
+                byte[] response = (valid ? json : "bad request")
                         .getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.sendResponseHeaders(valid ? 200 : 400, response.length);
+                try (var body = exchange.getResponseBody()) {
+                    body.write(response);
+                }
+            });
+            server.createContext("/instance-name", exchange -> {
+                byte[] response = "Serving Transaction from instance: test".getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "text/plain");
+                exchange.sendResponseHeaders(200, response.length);
                 try (var body = exchange.getResponseBody()) {
                     body.write(response);
                 }
@@ -37,8 +49,10 @@ public class TransactionServer implements QuarkusTestResourceLifecycleManager {
                 }
             });
             server.start();
-            return Map.of("transactions.base-url",
-                    "http://127.0.0.1:" + server.getAddress().getPort());
+            String url = "http://127.0.0.1:" + server.getAddress().getPort();
+            return Map.of("quarkus.rest-client.transaction-data-api.url", url,
+                    "transactions.base-url", url,
+                    "transactions.connection-ttl-ms", "300");
         } catch (IOException exception) {
             throw new UncheckedIOException(exception);
         }

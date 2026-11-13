@@ -14,6 +14,8 @@ import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 @Path("/accounts")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -24,7 +26,7 @@ public class AccountResource {
     AccountService accountService;
 
     @Inject
-    TranxClient tranxClient;
+    TranxEasyClient tranxClient;
 
     @GET
     public List<Account> listAccounts() {
@@ -43,10 +45,10 @@ public class AccountResource {
 
     @GET
     @Path("/{id}/transactions")
-    public List<Tranx> getTransactions(@PathParam("id") String id) {
+    public CompletionStage<List<Tranx>> getTransactions(@PathParam("id") String id) {
         return accountService.findById(id)
-                .map(account -> tranxClient.getTransactions(account.getId()))
-                .orElseGet(List::of);
+                .map(account -> tranxClient.getTransactions(account.getId()).toCompletionStage())
+                .orElseGet(() -> CompletableFuture.completedFuture(List.of()));
     }
 
     @POST
@@ -69,7 +71,7 @@ public class AccountResource {
     @GET
     @Path("/instance-name")
     @Produces(MediaType.TEXT_PLAIN)
-    public String getInstanceName() {
-        return tranxClient.getInstanceName();
+    public CompletionStage<String> getInstanceName() {
+        return tranxClient.getInstanceName().toCompletionStage();
     }
 }
