@@ -1,7 +1,9 @@
 package com.red;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.http.ClientResolverConfig;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientConfig;
 import io.vertx.core.http.PoolOptions;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
@@ -11,6 +13,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
@@ -32,10 +35,13 @@ public class TranxEasyClientProducer {
         }
         LOG.info("Creating Vert.x HttpClient with connection TTL {} ms", connectionTtlMs);
         PoolOptions poolOptions = new PoolOptions()
-                .setHttp1MaxSize(10);
-//                .setMaxLifetime(connectionTtlMs)
-//                .setMaxLifetimeUnit(TimeUnit.MILLISECONDS);
+                .setHttp1MaxSize(10)
+                .setMaxLifetime(connectionTtlMs)
+                .setMaxLifetimeUnit(TimeUnit.MILLISECONDS);
         return vertx.httpClientBuilder()
+                .with(new HttpClientConfig()
+                        .setResolverConfig(new ClientResolverConfig()
+                                .setMaxKeepAlive(Duration.ofSeconds(60))))
                 .with(poolOptions)
                 .withConnectHandler(connection -> LOG.info(
                         "TranxEasyClient connection established: local={}, remote={}, protocol={}",
